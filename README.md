@@ -1,132 +1,72 @@
-# 🔌 Remote System Power Control
+# 🔌 System ON/OFF Remote Controller
 
-<p align="center">
-  <img src="https://img.shields.io/badge/.NET-8-blue" />
-  <img src="https://img.shields.io/badge/Platform-Windows-success" />
-  <img src="https://img.shields.io/badge/License-Custom-green" />
-  <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
-</p>
+A lightweight **C# + ASP.NET Core + Windows Service** project to remotely control Windows power actions like **Shutdown, Restart, Sleep, and Wake-on-LAN (Power ON)** through a simple web panel.
 
 ---
 
-## 📖 Overview
+## 🚀 Overview
 
-A lightweight system to **remotely control Windows power actions**:
+This system allows you to control a Windows PC remotely using:
 
-* 🔌 Shutdown
-* 🔄 Restart
-* 💤 Sleep
+* 🌐 Web Browser (Mobile / Desktop)
+* ⚙️ ASP.NET Core API Server
+* 🖥️ C# Windows Service (Client Agent)
+
+---
+
+## ⚡ Features
+
+* 🔌 Remote Shutdown
+* 🔄 Restart System
+* 💤 Sleep Mode
 * ⚡ Power ON (Wake-on-LAN)
-
-Control your system from:
-
-* 🌐 Same Network (LAN)
-* 🌍 Different Network (Internet)
-* 📱 Mobile Browser
+* 📡 Works on LAN & Internet
+* 📱 Mobile friendly web UI
+* 🔐 Extendable authentication support
 
 ---
 
-## 🚀 Features
+## 🏗️ System Flow
 
-* 🔌 Full power control (ON/OFF/Restart/Sleep)
-* ⚡ Wake-on-LAN support (Power ON)
-* 🌐 Works across networks
-* 📱 Mobile-friendly web panel
-* ⚙️ Windows background service
-* ⚡ Fast and lightweight
-* 🔐 Extendable security system
+```
+Browser / Mobile
+       ↓
+ASP.NET Core API
+       ↓
+Windows Service (C#)
+       ↓
+System Power Actions
+```
+
+---
+
+## 🛠️ Tech Stack
+
+* Backend: ASP.NET Core Web API
+* Client: C# Windows Service (.NET Worker Service)
+* Frontend: HTML, CSS, JavaScript
+* Communication: REST API (HTTP)
 
 ---
 
 ## ⚙️ How It Works
 
-```id="0gm4xr"
-[ 📱 Browser / Mobile ]
-            ↓
-   [ 🌐 ASP.NET Core API ]
-            ↓
-   [ ⚙️ Windows Service ]
-            ↓
-   [ 💻 Target Machine ]
-```
-
-* Web panel sends commands to API
-* Windows service polls server
-* Service executes system-level commands
-* Wake-on-LAN packet used for power ON
+1. Web panel sends a command (shutdown/restart/sleep)
+2. API stores or forwards the command
+3. Windows service polls the API
+4. Service executes system command on the machine
 
 ---
 
-## 🛠️ Technologies Used
+## 📡 API Endpoints
 
-* **Backend:** ASP.NET Core Web API
-* **Client Service:** C# (.NET Worker Service)
-* **Frontend:** HTML, CSS, JavaScript
-* **Protocol:** HTTP (REST API)
+### Send Command
 
----
-
-## 🚀 Installation
-
-### 1️⃣ Clone Repository
-
-```bash id="6u6u4r"
-git clone https://github.com/your-username/remote-power-control.git
-cd remote-power-control
 ```
-
----
-
-### 2️⃣ Run Server
-
-```bash id="lt6y6q"
-cd server
-dotnet restore
-dotnet run
-```
-
----
-
-### 3️⃣ Setup Windows Service
-
-Update configuration:
-
-```json id="r5qv5y"
-{
-  "ServerUrl": "http://YOUR_SERVER_IP:5000",
-  "DeviceId": "PC-01"
-}
-```
-
-Build and install:
-
-```bash id="dr1jyd"
-dotnet publish -c Release
-sc create RemotePowerService binPath= "C:\path\to\service.exe"
-sc start RemotePowerService
-```
-
----
-
-### 4️⃣ Run Web Panel
-
-Open `index.html` and update API URL:
-
-```javascript id="xbrq1c"
-const API_URL = "http://YOUR_SERVER_IP:5000/api/device/command";
-```
-
----
-
-## 📡 API Reference
-
-### 🔹 Send Command
-
-```id="7r0t8o"
 POST /api/device/command
 ```
 
-```json id="e5v8vw"
+```json
 {
   "action": "shutdown"
 }
@@ -134,55 +74,83 @@ POST /api/device/command
 
 ---
 
-### 🔹 Get Command
+### Get Command
 
-```id="x8z1qv"
+```
 GET /api/device/command?deviceId=PC-01
 ```
 
 ---
 
-## ⚡ Wake-on-LAN (Power ON)
+## 🌐 Web Panel
 
-To enable remote startup:
-
-* Enable **Wake-on-LAN** in BIOS
-* Enable in Windows Network Adapter settings
-* Use MAC address to send WoL packet
-* Ensure router allows WoL packets (for WAN use)
+* Simple HTML, CSS, JavaScript interface
+* Buttons for power control actions
+* Calls backend API using fetch()
 
 ---
 
-## 🔐 Security Recommendations
+## ⚙️ Windows Service
 
-* Use HTTPS (SSL)
-* Add API authentication (JWT / API key)
-* Restrict unknown devices
-* Add logging & monitoring
+The service runs in background and executes system commands:
+
+* shutdown → `shutdown /s /t 0`
+* restart → `shutdown /r /t 0`
+* sleep → `rundll32.exe powrprof.dll,SetSuspendState`
+
+---
+
+## 🔐 Security Notes
+
+For production use, add:
+
+* JWT Authentication
+* HTTPS (SSL)
+* API Key validation
+* Device ID validation
+
+---
+
+## 📱 Mobile Support
+
+Fully responsive web panel allows control from:
+
+* Android
+* iOS
+* Any browser device
 
 ---
 
 ## 💡 Future Improvements
 
-* 📊 Dashboard UI
-* 👥 Multi-device control
-* ⏰ Scheduling
-* 🔔 Notifications
-* 📱 Mobile App
+* Real-time WebSocket control
+* Multi-device dashboard
+* Scheduled shutdown/restart
+* Push notifications
+* Android/iOS app
 
 ---
 
-## 🤝 Contributing
+## 👨‍💻 Author
 
-Pull requests are welcome.
-For major changes, open an issue first.
+**Ajeet (c) 2026**
 
 ---
 
 ## 📄 License
 
-See LICENSE file for details.
+This project is licensed under **MIT License**
+See `LICENSE` file for details.
 
 ---
 
-🔥 *Built for practical remote system control*
+## ⭐ Support
+
+If you like this project:
+
+* ⭐ Star the repo
+* 🍴 Fork it
+* 🔧 Improve it
+
+---
+
