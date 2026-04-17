@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+</head>
+<body>
+
+    <h2>Remote Control Panel</h2>
+
+    <input type="text" id="deviceId" placeholder="Enter Device Name" />
+    <br><br>
+
+    <button onclick="shutdown()">Shutdown</button>
+    <button onclick="restart()">Restart</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+
+    <script>
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("http://localhost:5285/deviceHub")
+    .build();
+
+connection.start();
+
+function shutdown() {
+    const id = document.getElementById("deviceId").value;
+    if(confirm("Are you sure to shutdown?")) {
+        connection.invoke("SendCommand", id, "shutdown");
+    }
+}
+
+function restart() {
+    const id = document.getElementById("deviceId").value;
+    if(confirm("Are you sure to restart?")) {
+        connection.invoke("SendCommand", id, "restart");
+    }
+}
+    </script>
+
+</body>
+</html>

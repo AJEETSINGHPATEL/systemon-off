@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Remote Control Panel</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 10px;
+            width: 250px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .shutdown {
+            background: red;
+            color: white;
+        }
+
+        .restart {
+            background: orange;
+            color: white;
+        }
+
+        .wakeup {
+            background: green;
+            color: white;
+        }
+
+        .wakeup:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            opacity: 0.8;
+        }
+
+        .device-info {
+            margin: 15px 0;
+            padding: 10px;
+            background: #334155;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .device-info .label {
+            color: #94a3b8;
+        }
+
+        .status-online {
+            color: #4ade80;
+        }
+
+        .status-offline {
+            color: #f87171;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2>🖥 Remote Control Panel</h2>
+
+        <select id="deviceList" onchange="onDeviceSelect()">
+            <option value="">Select Device</option>
+        </select>
+
+        <div id="deviceInfo" class="device-info" style="display: none;">
+            <div><span class="label">Status:</span> <span id="deviceStatus"></span></div>
+            <div><span class="label">MAC:</span> <span id="deviceMac"></span></div>
+            <div><span class="label">IP:</span> <span id="deviceIp"></span></div>
+        </div>
+
+        <br>
+
+        <button class="wakeup" id="wakeBtn" onclick="wakeUp()">💡 Wake Up</button>
+        <button class="shutdown" onclick="shutdown()">⏻ Shutdown</button>
+        <button class="restart" onclick="restart()">🔄 Restart</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+
+    <script>
+        // Store device information
+        let deviceData = {};
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5285/deviceHub")
+            .build();
+
+        connection.start().then(() => {
+            console.log("Connected to server");
+        });
+
+        // Receive device list with status and MAC addresses
+        connection.on("UpdateDeviceList", (devices) => {
+            const dropdown = document.getElementById("deviceList");
+            const currentSelection = dropdown.value;
+            
+            // Clear and add default option
+            dropdown.innerHTML = '<option value="">Select Device</option>';
+            
+            // Store device data
+            deviceData = {};
+            
+            devices.forEach(device => {
+                // Store full device info
+                deviceData[device.deviceId] = device;
+                
+                // Add to dropdown
+                const option = document.createElement("option");
+                option.value = device.deviceId;
+                option.text = device.deviceId + (device.isOnline ? " 🟢" : " 🔴");
+                dropdown.appendChild(option);
+            });
+            
+            // Restore selection if still exists
+            if (currentSelection && deviceData[currentSelection]) {
+                dropdown.value = currentSelection;
+                onDeviceSelect();
+            }
+        });
+
+        // Handle device selection change
+        function onDeviceSelect() {
+            const deviceId = document.getElementById("deviceList").value;
+            const infoDiv = document.getElementById("deviceInfo");
+            const wakeBtn = document.getElementById("wakeBtn");
+            
+            if (!deviceId || !deviceData[deviceId]) {
+                infoDiv.style.display = "none";
+                wakeBtn.disabled = true;
+                return;
+            }
+            
+            const device = deviceData[deviceId];
+            
+            // Show device info
+            infoDiv.style.display = "block";
+            
+            // Status
+            const statusSpan = document.getElementById("deviceStatus");
+            statusSpan.textContent = device.isOnline ? "Online" : "Offline";
+            statusSpan.className = device.isOnline ? "status-online" : "status-offline";
+            
+            // MAC Address
+            document.getElementById("deviceMac").textContent = device.macAddress || "Not available";
+            
+            // IP Address
+            document.getElementById("deviceIp").textContent = device.ipAddress || "Not available";
+            
+            // Enable/disable wake button based on MAC availability
+            wakeBtn.disabled = !device.macAddress;
+        }
+
+        function wakeUp() {
+            const id = document.getElementById("deviceList").value;
+
+            if (!id) {
+                alert("Select device first!");
+                return;
+            }
+
+            const device = deviceData[id];
+            if (!device || !device.macAddress) {
+                alert("Cannot wake up: MAC address not available!");
+                return;
+            }
+
+            if (confirm("Wake up device " + id + "?")) {
+                connection.invoke("WakeUpDevice", id)
+                    .then(() => {
+                        alert("Wake-up signal sent to " + id);
+                    })
+                    .catch(err => {
+                        alert("Error: " + err.message);
+                    });
+            }
+        }
+
+        function shutdown() {
+            const id = document.getElementById("deviceList").value;
+
+            if (!id) {
+                alert("Select device first!");
+                return;
+            }
+
+            if (confirm("Shutdown " + id + "?")) {
+                connection.invoke("SendCommand", id, "shutdown")
+                    .catch(err => {
+                        alert("Error: " + err.message);
+                    });
+            }
+        }
+
+        function restart() {
+            const id = document.getElementById("deviceList").value;
+
+            if (!id) {
+                alert("Select device first!");
+                return;
+            }
+
+            if (confirm("Restart " + id + "?")) {
+                connection.invoke("SendCommand", id, "restart")
+                    .catch(err => {
+                        alert("Error: " + err.message);
+                    });
+            }
+        }
+    </script>
+
+</body>
+</html>

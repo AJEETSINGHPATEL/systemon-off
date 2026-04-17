@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/WebPanel/">
+    <File Path="index.html" />
+  </Folder>
+  <Project Path="../BackendServer/BackendServer/BackendServer.csproj" />
+  <Project Path="../DeviceClientService/DeviceClientService.csproj" />
+</Solution>
